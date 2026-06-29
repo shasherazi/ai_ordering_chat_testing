@@ -26,7 +26,6 @@ type ChatContextType = {
   messages: ChatMessage[];
   sendMessage: (text: string) => Promise<void>;
   resetChat: () => Promise<void>;
-  recipientNumber: string;
   senderNumber: string;
   isSending: boolean;
   error: string | null;
@@ -38,7 +37,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userFrom, setUserFrom] = useState(() => randomUsNumber());
+
+  // This stays stable until resetChat() changes it.
+  const [senderNumber, setSenderNumber] = useState(() => randomUsNumber());
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -46,14 +47,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || []);
-        setUserFrom(randomUsNumber()); // Randomize sender number for each fetch to simulate different users
       }
     } catch {
       // Intentionally ignore polling errors
     }
   }, []);
 
-  // Poll for new messages (simulates a realtime web socket / webhook incoming)
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000);
@@ -74,7 +73,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       }
 
       setMessages([]);
-      setUserFrom(randomUsNumber());
+      setSenderNumber(randomUsNumber());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -84,13 +83,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
+
     setIsSending(true);
     setError(null);
 
     const payload = {
       MessageSid: `SM${Date.now()}${Math.floor(Math.random() * 1000)}`,
       AccountSid: ACCOUNT_SID,
-      From: userFrom,
+      From: senderNumber, // stays the same until resetChat()
       To: USER_TO,
       Body: text,
     };
@@ -107,7 +107,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error || "Failed to send");
       }
 
-      await fetchMessages(); // immediately fetch locally to see the update
+      await fetchMessages();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -121,8 +121,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         messages,
         sendMessage,
         resetChat,
-        recipientNumber: USER_TO,
-        senderNumber: userFrom,
+        senderNumber,
         isSending,
         error,
       }}
