@@ -32,3 +32,7 @@ export function addMessage(message: ChatMessage) {
 export function getMessages() {
   return chatStore.messages;
 }
+
+export function clearMessages() {
+  chatStore.messages.length = 0;
+}

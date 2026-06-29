@@ -4,11 +4,12 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 import { ChatProvider, useChat } from "@/context/ChatContext";
 
 function ChatInterface() {
-  const { messages, sendMessage, isSending, error } = useChat();
+  const { messages, sendMessage, resetChat, senderNumber, isSending, error } =
+    useChat();
+
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -21,47 +22,74 @@ function ChatInterface() {
     setInput("");
   };
 
+  const handleReset = async () => {
+    await resetChat();
+    setInput("");
+  };
+
   return (
     <div className="flex h-screen bg-neutral-100 flex-col items-center justify-center p-4 sm:p-6 font-sans">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-full max-h-[800px] border border-neutral-200">
+      <div className="flex h-full max-h-[800px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl">
         {/* Header */}
-        <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 text-white">
-          <h1 className="text-xl font-bold tracking-tight">Support Chat</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Simulating webhooks to{" "}
-            <code className="bg-slate-800 px-1 py-0.5 rounded text-slate-300">
-              /message
-            </code>
-          </p>
+        <div className="border-b border-slate-800 bg-slate-900 px-6 py-4 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Support Chat</h1>
+              <p className="mt-1 text-xs text-slate-400">
+                Simulating webhooks to{" "}
+                <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">
+                  /message
+                </code>
+              </p>
+              <p className="mt-2 text-xs text-slate-400">
+                From:{" "}
+                <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">
+                  {senderNumber}
+                </code>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={isSending}
+              className="rounded-xl bg-slate-700 px-4 py-2 text-xs font-semibold transition-colors hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500"
+            >
+              Reset chat
+            </button>
+          </div>
         </div>
 
         {/* Message Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-4">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50 p-6">
           {messages.length === 0 ? (
-            <div className="text-center text-slate-400 mt-10 text-sm">
+            <div className="mt-10 text-center text-sm text-slate-400">
               No messages yet. Start typing below!
             </div>
           ) : (
             messages.map((message) => {
               const isUser = message.role === "user";
+
               return (
                 <div
                   key={message.id}
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
                       isUser
-                        ? "bg-blue-600 text-white rounded-tr-sm"
-                        : "bg-white text-slate-800 border border-slate-200 rounded-tl-sm"
+                        ? "rounded-tr-sm bg-blue-600 text-white"
+                        : "rounded-tl-sm border border-slate-200 bg-white text-slate-800"
                     }`}
                   >
                     <div
-                      className={`text-[10px] font-bold mb-1 uppercase tracking-wider ${isUser ? "text-blue-200" : "text-slate-400"}`}
+                      className={`mb-1 text-[10px] font-bold uppercase tracking-wider ${
+                        isUser ? "text-blue-200" : "text-slate-400"
+                      }`}
                     >
                       {isUser ? "You" : "Model"}
                     </div>
-                    <div className="leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="whitespace-pre-wrap break-words leading-relaxed">
                       {message.text}
                     </div>
                   </div>
@@ -74,7 +102,7 @@ function ChatInterface() {
 
         {/* Error message */}
         {error && (
-          <div className="px-6 py-2 bg-red-50 text-red-600 text-xs font-semibold">
+          <div className="bg-red-50 px-6 py-2 text-xs font-semibold text-red-600">
             {error}
           </div>
         )}
@@ -82,7 +110,7 @@ function ChatInterface() {
         {/* Input Area */}
         <form
           onSubmit={handleSubmit}
-          className="p-4 bg-white border-t border-slate-200 flex gap-3"
+          className="flex gap-3 border-t border-slate-200 bg-white p-4"
         >
           <input
             type="text"
@@ -90,12 +118,12 @@ function ChatInterface() {
             onChange={(e) => setInput(e.target.value)}
             disabled={isSending}
             placeholder="I want 2 zinger burgers..."
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100 transition-all text-black"
+            className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-black transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100"
           />
           <button
             type="submit"
             disabled={isSending || !input.trim()}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold rounded-xl transition-colors shadow-sm"
+            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-blue-300"
           >
             {isSending ? "..." : "Send"}
           </button>
@@ -105,7 +133,6 @@ function ChatInterface() {
   );
 }
 
-// Wrap the interface in the provider we created
 export default function Page() {
   return (
     <ChatProvider>
