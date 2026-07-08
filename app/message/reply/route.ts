@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { addMessage } from "@/lib/chat-store";
 
 export async function POST(request: Request) {
+  console.log("POST /message/reply");
+
   const body = await request.json();
   const text = body.text?.trim();
 
