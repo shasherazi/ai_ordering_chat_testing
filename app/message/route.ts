@@ -21,15 +21,18 @@ export async function POST(request: Request) {
     );
   }
 
-  fetch("http://localhost:3000/webhooks/telnyx/sendMessage", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: body.from,
-      to: body.to,
-      text: body.text,
-    }),
-  }).catch((error) => {
+  fetch(
+    "https://ai-ordering-28435915977.us-central1.run.app/webhooks/telnyx/sendMessage",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: body.from,
+        to: body.to,
+        text: body.text,
+      }),
+    },
+  ).catch((error) => {
     console.error("Failed to forward message to /message:", error);
   });
 
