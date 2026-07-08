@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     );
   }
 
-  fetch(
+  const response = await fetch(
     "https://ai-ordering-28435915977.us-central1.run.app/webhooks/telnyx/sendMessage",
     {
       method: "POST",
@@ -32,9 +32,18 @@ export async function POST(request: Request) {
         text: body.text,
       }),
     },
-  ).catch((error) => {
-    console.error("Failed to forward message to /message:", error);
-  });
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Failed to send message: ${errorText}`,
+      },
+      { status: response.status },
+    );
+  }
 
   const message = addMessage({
     id: `SM${Date.now()}`,
