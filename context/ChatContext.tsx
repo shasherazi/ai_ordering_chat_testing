@@ -9,18 +9,7 @@ import React, {
 } from "react";
 import type { ChatMessage } from "@/lib/chat-store";
 
-const ACCOUNT_SID = "AC123456789abcdef";
-const USER_TO = "+15551234567";
-
-function randomUsNumber() {
-  const area = Math.floor(Math.random() * 800) + 200;
-  const exchange = Math.floor(Math.random() * 800) + 200;
-  const line = Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, "0");
-
-  return `+1${area}${exchange}${line}`;
-}
+const USER_TO = "+13095810289";
 
 type ChatContextType = {
   messages: ChatMessage[];
@@ -39,7 +28,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   // This stays stable until resetChat() changes it.
-  const [senderNumber, setSenderNumber] = useState(() => randomUsNumber());
+  const [senderNumber, setSenderNumber] = useState("+13095810258");
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -64,7 +53,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      const res = await fetch("/api/chat/messages", {
+      const res = await fetch(`/api/chat/messages/${senderNumber}`, {
         method: "DELETE",
       });
 
@@ -73,7 +62,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       }
 
       setMessages([]);
-      setSenderNumber(randomUsNumber());
+      // Reset to default sender number
+      setSenderNumber("+13095810258");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -88,11 +78,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     const payload = {
-      MessageSid: `SM${Date.now()}${Math.floor(Math.random() * 1000)}`,
-      AccountSid: ACCOUNT_SID,
-      From: senderNumber, // stays the same until resetChat()
-      To: USER_TO,
-      Body: text,
+      from: senderNumber, // stays the same until resetChat()
+      to: USER_TO,
+      text: text,
     };
 
     try {

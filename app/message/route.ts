@@ -2,41 +2,41 @@ import { NextResponse } from "next/server";
 import { addMessage } from "@/lib/chat-store";
 
 type IncomingUserMessage = {
-  MessageSid?: string;
-  AccountSid?: string;
-  From?: string;
-  To?: string;
-  Body?: string;
+  from?: string;
+  to?: string;
+  text?: string;
 };
 
 export async function POST(request: Request) {
   const body = (await request.json()) as IncomingUserMessage;
 
-  if (!body.Body || !body.From || !body.To) {
+  if (!body.text || !body.from || !body.to) {
     return NextResponse.json(
-      { ok: false, error: "Body, From, and To are required." },
+      {
+        ok: false,
+        error:
+          "Missing required fields: 'from', 'to', and 'text' are required.",
+      },
       { status: 400 },
     );
   }
 
-  fetch("https://ai-ordering-28435915977.us-central1.run.app/message", {
+  fetch("http://localhost:3000/webhooks/telnyx/sendMessage", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      MessageSid: body.MessageSid,
-      AccountSid: body.AccountSid,
-      From: body.From,
-      To: body.To,
-      Body: body.Body,
+      from: body.from,
+      to: body.to,
+      text: body.text,
     }),
   }).catch((error) => {
     console.error("Failed to forward message to /message:", error);
   });
 
   const message = addMessage({
-    id: body.MessageSid ?? `SM${Date.now()}`,
+    id: `SM${Date.now()}`,
     role: "user",
-    text: body.Body,
+    text: body.text,
     createdAt: new Date().toISOString(),
     raw: body as Record<string, unknown>,
   });
